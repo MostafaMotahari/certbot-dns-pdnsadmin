@@ -7,6 +7,8 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.release-type.outputs.target }}
     steps:
       - uses: actions/checkout@v4
       
@@ -34,10 +36,16 @@ jobs:
           else
             echo "target=pypi" >> $GITHUB_OUTPUT
           fi
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package
+          path: dist/
 
   publish-testpypi:
     needs: build-and-publish
-    if: steps.build-and-publish.outputs.target == 'testpypi'
+    if: ${{ needs.build-and-publish.outputs.target == 'testpypi' }}
     runs-on: ubuntu-latest
     environment: testpypi
     steps:
@@ -54,7 +62,7 @@ jobs:
 
   publish-pypi:
     needs: build-and-publish
-    if: steps.build-and-publish.outputs.target == 'pypi'
+    if: ${{ needs.build-and-publish.outputs.target == 'pypi' }}
     runs-on: ubuntu-latest
     environment: pypi
     steps:
