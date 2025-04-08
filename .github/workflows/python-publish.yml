@@ -1,0 +1,86 @@
+name: Publish PowerDNS plugin for Certbot Python Package
+
+on:
+  release:
+    types: [created, edited]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.release-type.outputs.target }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build==1.2.1 twine==4.0.2
+
+      - name: Build package
+        run: python -m build
+
+      - name: Verify distribution
+        run: |
+          if [ -d "dist" ]; then
+            twine check dist/*
+          else
+            echo "Distribution folder not found!" >&2
+            exit 1
+          fi
+
+      - name: Determine release target (TestPyPI or PyPI)
+        id: release-type
+        run: |
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "target=testpypi" >> "$GITHUB_OUTPUT"
+          else
+            echo "target=pypi" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package
+          path: dist/
+
+  publish-testpypi:
+    needs: build-and-publish
+    if: ${{ needs.build-and-publish.outputs.target == 'testpypi' }}
+    runs-on: ubuntu-latest
+    environment: testpypi
+    steps:
+      - name: Download built package
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package
+          path: dist
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+
+  publish-pypi:
+    needs: build-and-publish
+    if: ${{ needs.build-and-publish.outputs.target == 'pypi' }}
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download built package
+        uses: actions/download-artifact@v3
+        with:
+          name: python-package
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
