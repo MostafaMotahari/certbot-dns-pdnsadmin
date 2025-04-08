@@ -1,0 +1,1 @@
+from certbot_dns_pdnsadmin.dns_pdnsadmin import Authenticator, _PowerDNSAdminClient
