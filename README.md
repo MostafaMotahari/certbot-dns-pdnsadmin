@@ -4,7 +4,7 @@
 
 A Python plugin for [Certbot](https://certbot.eff.org/) to perform DNS-01 challenges using the [PowerDNS-Admin](https://github.com/PowerDNS-Admin/PowerDNS-Admin) API.
 
-![certbot-dns-pdnsadmin](https://github.com/MostafaMotahari/certbot-dns-pdnsadmin/images/cover.png)
+![certbot-dns-pdnsadmin](https://github.com/MostafaMotahari/certbot-dns-pdnsadmin/blob/master/images/cover.png)
 
 ## Installation
 
